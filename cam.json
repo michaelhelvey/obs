@@ -1,0 +1,6 @@
+{
+  "source": "Video Capture Device",
+  "shape": { "aspect": "square", "radius": 120 },
+  "crop": { "left": 0, "top": 0, "right": 0, "bottom": 0 },
+  "border": { "width": 10, "color": "#404040" }
+}

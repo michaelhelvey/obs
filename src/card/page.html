@@ -1,0 +1,177 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        --accent: #89b4fa;
+        --done: #a6e3a1;
+        --border-width: 10px;
+        --border-color: #ffffff;
+        --radius: 106px;
+        --strike: 0%;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: transparent;
+        overflow: hidden;
+      }
+
+      body {
+        display: flex;
+        align-items: flex-end;
+        font-family: "Berkeley Mono", monospace;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .card {
+        position: relative;
+        box-sizing: border-box;
+        width: 100%;
+        padding: 44px 52px 50px;
+        border: var(--border-width) solid var(--border-color);
+        border-radius: var(--radius);
+        background:
+          radial-gradient(
+            120% 140% at 0% 0%,
+            color-mix(in srgb, var(--tint) 22%, transparent),
+            transparent 60%
+          ),
+          linear-gradient(160deg, #161c2a 0%, #0b0e15 100%);
+        color: #e6e9f2;
+        overflow: hidden;
+        transition:
+          opacity 400ms ease,
+          transform 500ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+        --tint: var(--accent);
+      }
+
+      .card.empty {
+        opacity: 0;
+        transform: translateY(40px) scale(0.96);
+      }
+
+      .card.done {
+        --tint: var(--done);
+      }
+
+      .label {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        margin-bottom: 24px;
+        font-size: 42px;
+        font-weight: bold;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: var(--tint);
+        transition: color 400ms ease;
+      }
+
+      .dot {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--tint);
+        box-shadow: 0 0 22px var(--tint);
+        animation: pulse 1.8s ease-in-out infinite;
+      }
+
+      .done .dot {
+        animation: none;
+        box-shadow: 0 0 0 transparent;
+      }
+
+      .text {
+        font-size: 62px;
+        line-height: 1.28;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .typed {
+        background: linear-gradient(var(--done), var(--done)) no-repeat 0 58% / var(--strike) 5px;
+        -webkit-box-decoration-break: clone;
+        box-decoration-break: clone;
+        transition:
+          background-size 700ms ease,
+          opacity 700ms ease;
+      }
+
+      .done .typed {
+        --strike: 100%;
+        opacity: 0.55;
+      }
+
+      .caret {
+        display: inline-block;
+        width: 0.55em;
+        height: 1.05em;
+        margin-left: 4px;
+        vertical-align: -0.15em;
+        background: var(--tint);
+        animation: blink 1.05s steps(1) infinite;
+      }
+
+      .done .caret {
+        display: none;
+      }
+
+      @keyframes pulse {
+        50% {
+          opacity: 0.35;
+          transform: scale(0.8);
+        }
+      }
+
+      @keyframes blink {
+        50% {
+          opacity: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card empty">
+      <div class="label"><span class="dot"></span><span class="label-text"></span></div>
+      <div class="text"><span class="typed"></span><span class="caret"></span></div>
+    </div>
+    <script>
+      const card = document.querySelector(".card");
+      const labelText = document.querySelector(".label-text");
+      const typed = document.querySelector(".typed");
+      const root = document.documentElement.style;
+      let shown = "";
+      let typing = 0;
+
+      function typeOut(text) {
+        const run = ++typing;
+        shown = text;
+        typed.textContent = "";
+        [...text].forEach((char, i) =>
+          setTimeout(
+            () => {
+              if (run === typing) typed.textContent += char;
+            },
+            120 + i * 28,
+          ),
+        );
+      }
+
+      new EventSource("/events").onmessage = (event) => {
+        const view = JSON.parse(event.data);
+        root.setProperty("--accent", view.accent);
+        root.setProperty("--border-width", `${view.border.width}px`);
+        root.setProperty("--border-color", view.border.color);
+        root.setProperty("--radius", `${view.radius}px`);
+        labelText.textContent = view.todo.done ? `✓ done` : view.label;
+        card.classList.toggle("empty", view.todo.text === "");
+        card.classList.toggle("done", view.todo.done);
+        if (view.todo.text !== shown) typeOut(view.todo.text);
+      };
+    </script>
+  </body>
+</html>
